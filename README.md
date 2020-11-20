@@ -21,14 +21,13 @@
 
 ### 启动服务
 
-1. `auth`: `AuthApplication`, 鉴权服务
+1. `auth`: `AuthApplication`, 认证服务
 2. `user`: `UserApplication`, 用户服务
 3. `sms`: `SmsApplication`, 邮件服务
 4. `group`: `GroupApplication`, 群组服务
 5. `chat`: `ChatApplication`, 聊天服务
-6. `media`: `MediaApplication`, 媒体服务
-7. `message`: `MessageApplication`, 消息服务
-8. `account`: `AccountApplication`, 账户服务
+6. `message`: `MessageApplication`, 消息服务
+7. `account`: `AccountApplication`, 账户服务
 
 ### 访问 `swagger` 文档
 
@@ -37,17 +36,12 @@
 
 #### 架构设计
 
-![image-20201021005206055](doc/image/image-20201021005206055.png)
+![image-20201120203059339](doc/image/image-20201120203059339.png)
 
 #### 详细功能：
 
-![image-20201021005206013](doc/image/image-20201021005206013.png)
+![image-20201120203727059](doc/image/image-20201120203727059.png)
 
 #### 数据库设计：
 
-![image-20201021231238096](doc/image/image-20201021231238096.png)
-
-### TodoList
-
- - [ ] `group` 维护管理员人数字段
- - [ ] `media` 服务
+![image-20201120193441226](doc/image/image-20201120193441226.png)
