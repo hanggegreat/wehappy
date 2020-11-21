@@ -6,6 +6,8 @@ import cn.chasers.wehappy.message.mapper.ConversationMapper;
 import cn.chasers.wehappy.message.service.IConversationService;
 import cn.chasers.wehappy.message.service.IConversationUnreadService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,28 +22,34 @@ import java.util.Map;
  * @author lollipop
  * @since 2020-11-16
  */
+@Slf4j
 @Service
 public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Conversation> implements IConversationService {
 
-    private final IConversationUnreadService conversationUnreadService;
-
-    public ConversationServiceImpl(IConversationUnreadService conversationUnreadService) {
-        this.conversationUnreadService = conversationUnreadService;
-    }
+    @Autowired
+    private IConversationUnreadService conversationUnreadService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Conversation saveOrUpdate(MessageIndex index) {
-        Conversation conversation = lambdaQuery().allEq(Map.of(Conversation::getFromId, index.getFrom(), Conversation::getToId, index.getTo())).one();
+        Conversation conversation;
+        if (index.getFromId() == null) {
+            conversation = lambdaQuery().eq(Conversation::getToId, index.getToId()).one();
+        } else {
+            conversation = lambdaQuery().allEq(Map.of(Conversation::getFromId, index.getFromId(), Conversation::getToId, index.getToId())).one();
+        }
 
         if (conversation == null) {
             conversation = new Conversation();
-            conversation.setFromId(index.getFrom());
-            conversation.setToId(index.getTo());
+            conversation.setType(index.getType());
+            conversation.setFromId(index.getFromId());
+            conversation.setToId(index.getToId());
         }
 
         conversation.setMessageId(index.getMessageId());
 
+
+        saveOrUpdate(conversation);
         return conversation;
     }
 

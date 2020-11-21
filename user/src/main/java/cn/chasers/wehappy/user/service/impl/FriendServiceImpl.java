@@ -15,6 +15,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.mysql.cj.MessageBuilder;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +34,7 @@ import java.util.Map;
  * @since 2020-10-26
  */
 @Service
+@Slf4j
 public class FriendServiceImpl extends ServiceImpl<FriendMapper, Friend> implements IFriendService {
 
     private final FriendMapper friendMapper;
@@ -51,7 +53,7 @@ public class FriendServiceImpl extends ServiceImpl<FriendMapper, Friend> impleme
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean addFriend(Long fromId, Long toId) {
-        User to = userService.getById(fromId);
+        User to = userService.getById(toId);
         if (to == null) {
             Asserts.fail(MessageConstant.USER_NOT_EXIST);
         }
@@ -85,14 +87,12 @@ public class FriendServiceImpl extends ServiceImpl<FriendMapper, Friend> impleme
     @Override
     public boolean handleAddFriend(Long fromId, Long toId, Boolean agree) {
         if (agree) {
-            if (!lambdaUpdate().
-                    allEq(Map.of(Friend::getFromId, fromId, Friend::getToId, toId))
+            lambdaUpdate()
+                    .allEq(Map.of(Friend::getFromId, fromId, Friend::getToId, toId))
                     .or()
                     .allEq(Map.of(Friend::getFromId, toId, Friend::getToId, fromId))
-                    .update()
-            ) {
-                return false;
-            }
+                    .set(Friend::getStatus, 1)
+                    .update();
 
             Map<String, Object> map = Map.of("type", "handleAddFriend", "userId", fromId, "fromId", toId, "result", true, "dateTime", new Date(System.currentTimeMillis()));
             pushMessage(map, String.valueOf(toId));
@@ -100,13 +100,11 @@ public class FriendServiceImpl extends ServiceImpl<FriendMapper, Friend> impleme
             return true;
         }
 
-        if (friendMapper.delete(
-                new LambdaQueryWrapper<Friend>()
-                        .allEq(Map.of(Friend::getFromId, fromId, Friend::getToId, toId))
-                        .allEq(Map.of(Friend::getFromId, toId, Friend::getToId, fromId))) == 0
-        ) {
-            return false;
-        }
+        lambdaUpdate()
+                .allEq(Map.of(Friend::getFromId, fromId, Friend::getToId, toId))
+                .or()
+                .allEq(Map.of(Friend::getFromId, toId, Friend::getToId, fromId))
+                .remove();
 
         Map<String, Object> map = Map.of("type", "handleAddFriend", "userId", fromId, "fromId", toId, "result", false, "dateTime", new Date(System.currentTimeMillis()));
         pushMessage(map, String.valueOf(toId));

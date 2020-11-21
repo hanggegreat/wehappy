@@ -31,7 +31,7 @@ public class Producer {
      * @param message 包含消息详细内容
      */
     public void sendMessage(ProtoMsg.Message message) {
-        mqSource.messageOutput().send(MessageBuilder.withPayload(message).
+        mqSource.messageOutput().send(MessageBuilder.withPayload(message.toByteArray()).
                 setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_OCTET_STREAM_VALUE).build());
     }
 
@@ -51,7 +51,7 @@ public class Producer {
      * @param message
      */
     public void sendPushMessage(ProtoMsg.Message message) {
-        mqSource.pushMessageOutput().send(MessageBuilder.withPayload(message).
+        mqSource.pushMessageOutput().send(MessageBuilder.withPayload(message.toByteArray()).
                 setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_OCTET_STREAM_VALUE).build());
     }
 }

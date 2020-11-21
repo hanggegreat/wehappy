@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static cn.chasers.wehappy.common.msg.ProtoMsg.MessageType.*;
+
 /**
  * <p>
  * 消息表 服务实现类
@@ -66,38 +68,49 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> impl
         // 1. 保存消息信息
         save(message);
 
-        Long from = msg.getMessageTypeValue() == ProtoMsg.MessageType.SINGLE_MESSAGE_VALUE
+        Long from = msg.getMessageTypeValue() == SINGLE_MESSAGE_VALUE
                 || msg.getMessageTypeValue() == ProtoMsg.MessageType.GROUP_MESSAGE_VALUE ? Long.parseLong(msg.getChatMessage().getFrom()) : null;
 
         Long to = Long.parseLong(msg.getTo());
 
-        // 2. 保存消息索引
-        MessageIndex index1 = messageIndexService.save(msg.getMessageTypeValue(), from, to, message.getId());
-        MessageIndex index2 = messageIndexService.save(msg.getMessageTypeValue(), to, from, message.getId());
-        // 3. 保存会话信息
-        Conversation conversation1 = conversationService.saveOrUpdate(index1);
-        Conversation conversation2 = conversationService.saveOrUpdate(index2);
-
-        // 4. 更新消息未读数
-        conversationUnreadService.increase(conversation1.getId(), 1);
-        conversationUnreadService.increase(conversation2.getId(), 1);
+        if (msg.getMessageTypeValue() == SINGLE_MESSAGE_VALUE || msg.getMessageTypeValue() == GROUP_MESSAGE_VALUE) {
+            // 2. 保存消息索引
+            MessageIndex index1 = messageIndexService.save(msg.getMessageTypeValue(), from, to, message.getId());
+            MessageIndex index2 = messageIndexService.save(msg.getMessageTypeValue(), to, from, message.getId());
+            // 3. 保存会话信息
+            Conversation conversation1 = conversationService.saveOrUpdate(index1);
+            Conversation conversation2 = conversationService.saveOrUpdate(index2);
+            // 4. 更新消息未读数
+            conversationUnreadService.increase(conversation1.getId(), 1);
+            conversationUnreadService.increase(conversation2.getId(), 1);
+        } else {
+            // 2. 保存消息索引
+            MessageIndex index = messageIndexService.save(msg.getMessageTypeValue(), from, to, message.getId());
+            // 3. 保存会话信息
+            Conversation conversation = conversationService.saveOrUpdate(index);
+            // 4. 更新消息未读数
+            conversationUnreadService.increase(conversation.getId(), 1);
+        }
 
         // 5. 推送消息
         // 私聊消息
-        if (message.getType() == ProtoMsg.MessageType.SINGLE_MESSAGE_VALUE) {
-            if (redisService.sIsMember(onlineUsersKey, to)) {
-                producer.sendPushMessage(msg);
+        if (message.getType() == GROUP_MESSAGE_VALUE) {
+            List<Long> userIds = groupService.getUserIds(to).getData();
+            if (userIds == null) {
+                return true;
             }
 
+            userIds.forEach(userId -> {
+                if (redisService.sIsMember(onlineUsersKey, userId)) {
+                    producer.sendPushMessage(MessageUtil.newMessage(msg.getId(), msg.getSequence(), msg.getTime(), userId.toString(), msg.getMessageType(), msg.getChatMessage()));
+                }
+            });
             return true;
         }
 
-        List<Long> userIds = groupService.getUserIds(to).getData();
-        userIds.forEach(userId -> {
-            if (redisService.sIsMember(onlineUsersKey, userId)) {
-                producer.sendPushMessage(MessageUtil.newMessage(msg.getId(), msg.getSequence(), msg.getTime(), userId.toString(), msg.getMessageType(), msg.getChatMessage()));
-            }
-        });
+        if (redisService.sIsMember(onlineUsersKey, to)) {
+            producer.sendPushMessage(msg);
+        }
 
         return true;
     }
@@ -111,10 +124,10 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> impl
 
         ConversationUnread conversationUnread = conversationUnreadService.getByConversationId(conversationId);
 
-        List<Long> deleteIndices = messageDeleteService.list(new LambdaQueryWrapper<MessageDelete>().allEq(Map.of(MessageDelete::getFrom, conversation.getFromId(), MessageDelete::getTo, conversation.getToId()))).stream().map(MessageDelete::getMessageIndexId).collect(Collectors.toList());
+        List<Long> deleteIndices = messageDeleteService.list(new LambdaQueryWrapper<MessageDelete>().allEq(Map.of(MessageDelete::getFromId, conversation.getFromId(), MessageDelete::getToId, conversation.getToId()))).stream().map(MessageDelete::getMessageIndexId).collect(Collectors.toList());
 
         List<MessageIndex> messageIndices = messageIndexMapper.selectList(new LambdaQueryWrapper<MessageIndex>()
-                .allEq(Map.of(MessageIndex::getFrom, conversation.getFromId(), MessageIndex::getTo, conversation.getToId(), MessageIndex::getType, conversation.getType()))
+                .allEq(Map.of(MessageIndex::getFromId, conversation.getFromId(), MessageIndex::getToId, conversation.getToId(), MessageIndex::getType, conversation.getType()))
                 .gt(MessageIndex::getMessageId, conversationUnread.getLastReadMessageId())
                 .notIn(MessageIndex::getId, deleteIndices)
         );
@@ -129,10 +142,10 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> impl
             return null;
         }
 
-        List<Long> deleteIndices = messageDeleteService.list(new LambdaQueryWrapper<MessageDelete>().allEq(Map.of(MessageDelete::getFrom, conversation.getFromId(), MessageDelete::getTo, conversation.getToId()))).stream().map(MessageDelete::getMessageIndexId).collect(Collectors.toList());
+        List<Long> deleteIndices = messageDeleteService.list(new LambdaQueryWrapper<MessageDelete>().allEq(Map.of(MessageDelete::getFromId, conversation.getFromId(), MessageDelete::getToId, conversation.getToId()))).stream().map(MessageDelete::getMessageIndexId).collect(Collectors.toList());
 
         LambdaQueryWrapper<MessageIndex> queryWrapper = new LambdaQueryWrapper<MessageIndex>()
-                .allEq(Map.of(MessageIndex::getFrom, conversation.getFromId(), MessageIndex::getTo, conversation.getToId(), MessageIndex::getType, conversation.getType()))
+                .allEq(Map.of(MessageIndex::getFromId, conversation.getFromId(), MessageIndex::getToId, conversation.getToId(), MessageIndex::getType, conversation.getType()))
                 .lt(MessageIndex::getMessageId, messageId)
                 .notIn(MessageIndex::getId, deleteIndices)
                 .orderByDesc(MessageIndex::getMessageId);
@@ -152,10 +165,10 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> impl
 
     @Override
     public IPage<Message> getMessagesByToId(Integer type, Long fromId, Long toId, Long messageId, Long currentPage, Long size) {
-        List<Long> deleteIndices = messageDeleteService.list(new LambdaQueryWrapper<MessageDelete>().allEq(Map.of(MessageDelete::getFrom, fromId, MessageDelete::getTo, toId))).stream().map(MessageDelete::getMessageIndexId).collect(Collectors.toList());
+        List<Long> deleteIndices = messageDeleteService.list(new LambdaQueryWrapper<MessageDelete>().allEq(Map.of(MessageDelete::getFromId, fromId, MessageDelete::getToId, toId))).stream().map(MessageDelete::getMessageIndexId).collect(Collectors.toList());
 
         LambdaQueryWrapper<MessageIndex> queryWrapper = new LambdaQueryWrapper<MessageIndex>()
-                .allEq(Map.of(MessageIndex::getFrom, fromId, MessageIndex::getTo, toId, MessageIndex::getType, type))
+                .allEq(Map.of(MessageIndex::getFromId, fromId, MessageIndex::getToId, toId, MessageIndex::getType, type))
                 .lt(MessageIndex::getMessageId, messageId)
                 .notIn(MessageIndex::getId, deleteIndices)
                 .orderByDesc(MessageIndex::getMessageId);

@@ -26,7 +26,7 @@ public interface MqSource {
     MessageChannel registerEmailOutput();
 
     /**
-     * 推送消息给客户端的通道
+     * 发送消息给的通道
      *
      * @return 通道
      */

@@ -170,7 +170,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         user.setNumberLike(user.getNumberLike() + 1);
         save(user);
 
-        return redisService.sAdd(likeInfoKey + redisKeySeparator + id, userId);
+        return redisService.sAdd(likeInfoKey + redisKeySeparator + id, (Object) userId);
     }
 
     @Override

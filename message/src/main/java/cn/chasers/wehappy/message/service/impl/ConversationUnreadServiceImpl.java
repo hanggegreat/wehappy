@@ -4,6 +4,7 @@ import cn.chasers.wehappy.common.exception.Asserts;
 import cn.chasers.wehappy.message.entity.Conversation;
 import cn.chasers.wehappy.message.entity.ConversationUnread;
 import cn.chasers.wehappy.message.entity.MessageIndex;
+import cn.chasers.wehappy.message.entity.Unread;
 import cn.chasers.wehappy.message.mapper.ConversationUnreadMapper;
 import cn.chasers.wehappy.message.service.IConversationService;
 import cn.chasers.wehappy.message.service.IConversationUnreadService;
@@ -14,6 +15,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.redisson.RedissonRedLock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 
@@ -42,6 +44,7 @@ public class ConversationUnreadServiceImpl extends ServiceImpl<ConversationUnrea
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean increase(Long conversationId, int count) {
         Conversation conversation = conversationService.getById(conversationId);
         if (conversation == null) {
@@ -58,8 +61,19 @@ public class ConversationUnreadServiceImpl extends ServiceImpl<ConversationUnrea
             ConversationUnread conversationUnread = new ConversationUnread();
             conversationUnread.setConversationId(conversationId);
             conversationUnread.setCount(count);
-            conversationUnreadMapper.increase(conversationUnread);
-            unreadService.increase(conversation.getFromId(), count);
+            if (getByConversationId(conversationId) == null) {
+                save(conversationUnread);
+            } else {
+                conversationUnreadMapper.increase(conversationUnread);
+            }
+            if (unreadService.getByUserId(conversation.getToId()) == null) {
+                Unread unread = new Unread();
+                unread.setUserId(conversation.getToId());
+                unread.setCount(1);
+                unreadService.save(unread);
+            } else {
+                unreadService.increase(conversation.getToId(), count);
+            }
         } catch (Exception e) {
             log.error("", e);
         } finally {
@@ -86,7 +100,7 @@ public class ConversationUnreadServiceImpl extends ServiceImpl<ConversationUnrea
             }
 
             int conversationUnreadCount = messageIndexService.lambdaQuery()
-                    .allEq(Map.of(MessageIndex::getFrom, conversation.getFromId(), MessageIndex::getTo, conversation.getToId()))
+                    .allEq(Map.of(MessageIndex::getFromId, conversation.getFromId(), MessageIndex::getToId, conversation.getToId()))
                     .gt(MessageIndex::getMessageId, messageId)
                     .count();
 
@@ -109,6 +123,6 @@ public class ConversationUnreadServiceImpl extends ServiceImpl<ConversationUnrea
 
     @Override
     public ConversationUnread getByConversationId(Long conversationId) {
-        return getById(conversationId);
+        return lambdaQuery().eq(ConversationUnread::getConversationId, conversationId).one();
     }
 }

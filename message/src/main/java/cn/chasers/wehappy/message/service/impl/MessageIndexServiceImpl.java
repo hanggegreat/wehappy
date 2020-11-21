@@ -6,8 +6,6 @@ import cn.chasers.wehappy.message.service.IMessageIndexService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
-
 /**
  * <p>
  * 消息索引表 服务实现类
@@ -23,8 +21,8 @@ public class MessageIndexServiceImpl extends ServiceImpl<MessageIndexMapper, Mes
     public MessageIndex save(Integer type, Long from, Long to, Long messageId) {
         MessageIndex messageIndex = new MessageIndex();
         messageIndex.setType(type);
-        messageIndex.setFrom(from);
-        messageIndex.setTo(to);
+        messageIndex.setFromId(from);
+        messageIndex.setToId(to);
         messageIndex.setMessageId(messageId);
         save(messageIndex);
         return messageIndex;
@@ -34,9 +32,9 @@ public class MessageIndexServiceImpl extends ServiceImpl<MessageIndexMapper, Mes
     public MessageIndex getByUserIdAndMessageId(Long userId, Long id) {
         return lambdaQuery()
                 .eq(MessageIndex::getMessageId, id)
-                .eq(MessageIndex::getFrom, userId)
+                .eq(MessageIndex::getFromId, userId)
                 .or()
-                .eq(MessageIndex::getTo, userId)
+                .eq(MessageIndex::getToId, userId)
                 .one();
     }
 }

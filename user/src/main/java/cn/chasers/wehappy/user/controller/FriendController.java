@@ -55,13 +55,13 @@ public class FriendController {
     }
 
     @ApiOperation("处理添加好友请求")
-    @PutMapping("/{fromId}")
-    public CommonResult<Boolean> update(@PathVariable @Validated Long fromId, @RequestParam @Validated boolean agree) {
+    @PutMapping("/{fromId}/{agree}")
+    public CommonResult<Boolean> update(@PathVariable @Validated Long fromId, @PathVariable @Validated boolean agree) {
         return CommonResult.success(friendService.handleAddFriend(userService.getCurrentUser().getId(), fromId, agree));
     }
 
     @ApiOperation("删除好友")
-    @PutMapping("/{toId}")
+    @DeleteMapping("/{toId}")
     public CommonResult<Boolean> remove(@PathVariable @Validated Long toId) {
         return CommonResult.success(friendService.deleteFriend(userService.getCurrentUser().getId(), toId));
     }

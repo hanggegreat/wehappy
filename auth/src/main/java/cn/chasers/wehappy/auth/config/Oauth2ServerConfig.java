@@ -66,19 +66,19 @@ public class Oauth2ServerConfig extends AuthorizationServerConfigurerAdapter {
                 .secret(passwordEncoder.encode(secret))
                 .scopes("all")
                 .authorizedGrantTypes("password", "refresh_token")
-                // access_token 的有效期为24小时
-                .accessTokenValiditySeconds(3600 * 24)
-                // refresh_token 的有效期为7天
-                .refreshTokenValiditySeconds(3600 * 24 * 7)
+                // access_token 的有效期为100天
+                .accessTokenValiditySeconds(3600 * 24 * 100)
+                // refresh_token 的有效期为120天
+                .refreshTokenValiditySeconds(3600 * 24 * 100)
                 .and()
                 .withClient(AuthConstant.PORTAL_CLIENT_ID)
                 .secret(passwordEncoder.encode(secret))
                 .scopes("all")
                 .authorizedGrantTypes("password", "refresh_token")
                 // access_token 的有效期为24小时
-                .accessTokenValiditySeconds(3600 * 24)
-                // refresh_token 的有效期为7天
-                .refreshTokenValiditySeconds(3600 * 24 * 7);
+                .accessTokenValiditySeconds(3600 * 24 * 100)
+                // refresh_token 的有效期为120天
+                .refreshTokenValiditySeconds(3600 * 24 * 100);
     }
 
     @Override

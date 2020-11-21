@@ -7,7 +7,6 @@ import cn.chasers.wehappy.message.mapper.MessageDeleteMapper;
 import cn.chasers.wehappy.message.service.IMessageDeleteService;
 import cn.chasers.wehappy.message.service.IMessageIndexService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import org.bouncycastle.jcajce.provider.digest.MD2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,29 +39,29 @@ public class MessageDeleteServiceImpl extends ServiceImpl<MessageDeleteMapper, M
         MessageIndex index = messageIndexService.getByUserIdAndMessageId(userId, id);
         if (index.getType() == 0) {
             // 不是自己发的消息
-            if (!userId.equals(index.getFrom()) && !userId.equals(index.getTo())) {
+            if (!userId.equals(index.getFromId()) && !userId.equals(index.getToId())) {
                 return true;
             }
         } else if (index.getType() == 1) {
             // 不是群成员
-            if (groupService.getGroupUser(index.getTo(), userId) == null) {
+            if (groupService.getGroupUser(index.getToId(), userId) == null) {
                 return true;
             }
         } else {
             // 不是推送给自己的消息
-            if (!userId.equals(index.getTo())) {
+            if (!userId.equals(index.getToId())) {
                 return true;
             }
         }
 
-        if (lambdaQuery().allEq(Map.of(MessageDelete::getFrom, userId, MessageDelete::getMessageIndexId, index.getId())).count() > 0) {
+        if (lambdaQuery().allEq(Map.of(MessageDelete::getFromId, userId, MessageDelete::getMessageIndexId, index.getId())).count() > 0) {
             return true;
         }
 
         MessageDelete messageDelete = new MessageDelete();
         messageDelete.setType(index.getType());
-        messageDelete.setFrom(userId);
-        messageDelete.setTo(index.getTo());
+        messageDelete.setFromId(userId);
+        messageDelete.setToId(index.getToId());
         messageDelete.setMessageIndexId(index.getId());
         return save(messageDelete);
     }

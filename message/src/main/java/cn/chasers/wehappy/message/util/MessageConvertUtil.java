@@ -43,11 +43,11 @@ public class MessageConvertUtil {
      */
     public static ProtoMsg.Message db2proto(Message message, MessageIndex messageIndex) {
         Object msg = null;
-        String to = messageIndex.getTo().toString();
+        String to = messageIndex.getToId().toString();
         if (message.getType() == ProtoMsg.MessageType.PUSH_MESSAGE_VALUE) {
             msg = MessageUtil.newPushMessage(ProtoMsg.ContentType.forNumber(message.getType()), message.getContent());
         } else if (message.getType() == ProtoMsg.MessageType.SINGLE_MESSAGE_VALUE || message.getType() == ProtoMsg.MessageType.GROUP_MESSAGE_VALUE) {
-            msg = MessageUtil.newChatMessage(to, messageIndex.getFrom().toString(), ProtoMsg.ContentType.forNumber(message.getType()), message.getContent());
+            msg = MessageUtil.newChatMessage(to, messageIndex.getFromId().toString(), ProtoMsg.ContentType.forNumber(message.getType()), message.getContent());
         }
 
         return MessageUtil.newMessage(message.getId().toString(), message.getId().toString(), message.getTime().toString(), to, ProtoMsg.MessageType.forNumber(message.getType()), msg);

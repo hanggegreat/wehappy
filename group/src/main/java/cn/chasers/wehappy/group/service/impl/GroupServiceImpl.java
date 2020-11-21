@@ -32,17 +32,14 @@ import java.util.stream.Collectors;
  */
 @Service
 public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements IGroupService {
-    private final IGroupUserService groupUserService;
-    private final GroupMapper groupMapper;
+    @Autowired
+    private IGroupUserService groupUserService;
+
+    @Autowired
+    private GroupMapper groupMapper;
 
     @Value("${default.avatar}")
     private String defaultAvatar;
-
-    @Autowired
-    public GroupServiceImpl(IGroupUserService groupUserService, GroupMapper groupMapper) {
-        this.groupUserService = groupUserService;
-        this.groupMapper = groupMapper;
-    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)

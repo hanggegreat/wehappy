@@ -51,22 +51,22 @@ public class BigRedEnvelopeServiceImpl extends ServiceImpl<BigRedEnvelopeMapper,
     private final IUserService userService;
     private final IGroupService groupService;
 
-    @Value("{redis.redEnvelopeInfo.key}")
+    @Value("${redis.redEnvelopeInfo.key}")
     private String redEnvelopeInfoKey;
 
-    @Value("{redis.redEnvelopeInfo.expire}")
+    @Value("${redis.redEnvelopeInfo.expire}")
     private long redEnvelopeInfoExpire;
 
-    @Value("{redis.redEnvelopeUserIds.key}")
+    @Value("${redis.redEnvelopeUserIds.key}")
     private String redEnvelopeUserIdsKey;
 
-    @Value("{redis.redEnvelopeUserIds.expire}")
+    @Value("${redis.redEnvelopeUserIds.expire}")
     private long redEnvelopeUserIdsExpire;
 
-    @Value("{redis.database}")
+    @Value("${redis.database}")
     private String redisDatabase;
 
-    @Value("{redis.separator}")
+    @Value("${redis.separator}")
     private String redisSeparator;
 
     @Autowired
@@ -146,7 +146,7 @@ public class BigRedEnvelopeServiceImpl extends ServiceImpl<BigRedEnvelopeMapper,
             return false;
         }
 
-        redisService.sAdd(redisDatabase + redisSeparator + redEnvelopeUserIdsKey, redEnvelopeUserIdsExpire, userId);
+        redisService.sAdd(redisDatabase + redisSeparator + redEnvelopeUserIdsKey, redEnvelopeUserIdsExpire, new Object[]{userId});
 
         SmallRedEnvelope smallRedEnvelope = new SmallRedEnvelope();
         smallRedEnvelope.setBigRedEnvelopeId(bigRedEnvelopeId);

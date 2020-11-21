@@ -38,4 +38,11 @@ public interface IUnreadService extends IService<Unread> {
      * @return
      */
     Integer getCount(Long userId);
+
+    /**
+     * 根据 userId 查询详细信息
+     *
+     * @return
+     */
+    Unread getByUserId(Long userId);
 }

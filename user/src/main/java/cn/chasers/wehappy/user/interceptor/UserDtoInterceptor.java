@@ -3,7 +3,6 @@ package cn.chasers.wehappy.user.interceptor;
 import cn.chasers.wehappy.common.util.ThreadLocalUtils;
 import cn.chasers.wehappy.common.util.UserUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import javax.servlet.http.HttpServletRequest;
@@ -15,7 +14,6 @@ import javax.servlet.http.HttpServletResponse;
  * @author zhangyuanhang
  */
 @Slf4j
-@Component
 public class UserDtoInterceptor implements HandlerInterceptor {
 
     @Override

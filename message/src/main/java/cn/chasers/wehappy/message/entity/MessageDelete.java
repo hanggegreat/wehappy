@@ -25,10 +25,10 @@ public class MessageDelete extends BaseEntity {
     private Integer type;
 
     @ApiModelProperty(value = "发送者id")
-    private Long from;
+    private Long fromId;
 
     @ApiModelProperty(value = "接收者id：type为1时表示群聊Id")
-    private Long to;
+    private Long toId;
 
     @ApiModelProperty(value = "消息索引id")
     private Long messageIndexId;

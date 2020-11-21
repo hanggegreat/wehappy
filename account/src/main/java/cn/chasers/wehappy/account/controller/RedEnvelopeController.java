@@ -30,12 +30,10 @@ import java.util.List;
 @Api(value = "/red-envelope", tags = "账户模块")
 public class RedEnvelopeController {
     private final IBigRedEnvelopeService bigRedEnvelopeService;
-    private final ISmallRedEnvelopeService smallRedEnvelopeService;
 
     @Autowired
-    public RedEnvelopeController(IBigRedEnvelopeService bigRedEnvelopeService, ISmallRedEnvelopeService smallRedEnvelopeService) {
+    public RedEnvelopeController(IBigRedEnvelopeService bigRedEnvelopeService) {
         this.bigRedEnvelopeService = bigRedEnvelopeService;
-        this.smallRedEnvelopeService = smallRedEnvelopeService;
     }
 
     @ApiOperation("发红包")
