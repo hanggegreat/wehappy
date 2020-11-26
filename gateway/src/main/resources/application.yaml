@@ -44,10 +44,10 @@ spring:
             - Path=/chat/**
           filters:
             - StripPrefix=1
-        - id: account
-          uri: lb://account
+        - id: message
+          uri: lb://message
           predicates:
-            - Path=/account/**
+            - Path=/message/**
           filters:
             - StripPrefix=1
         - id: gateway
