@@ -48,7 +48,7 @@
         <starter-stream-kafka.version>3.0.8.RELEASE</starter-stream-kafka.version>
         <starter-data-redis.version>2.3.4.RELEASE</starter-data-redis.version>
         <netty.version>4.1.53.Final</netty.version>
-        <protobuf.version>3.13.0</protobuf.version>
+        <protobuf.version>3.16.3</protobuf.version>
         <redisson.version>3.13.6</redisson.version>
     </properties>
 
